@@ -36,11 +36,6 @@ contract ShrubManager {
         Sell(msg.sender, _numberOfTokens);
     }
 
-
-    function get_state() public view returns(string memory){
-        return state;
-    }
-
     function trigger_active() public {
         require(msg.sender==admin); 
         state = "active";
