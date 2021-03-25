@@ -4,15 +4,17 @@ import "./Token.sol";
 
 contract ShrubManager {
     address payable admin;
-    Token public tokenContract;
+    Token public AtokenContract;
+    Token public BtokenContract;
     uint256 public tokenPrice;
     uint256 public tokensSold;
 
     event Sell(address _buyer, uint256 _amount);
 
-    constructor(Token _tokenContract, uint256 _tokenPrice) public {
+    constructor(Token _AtokenContract, Token _BtokenContract, uint256 _tokenPrice) public {
         admin = msg.sender;
-        tokenContract = _tokenContract;
+        AtokenContract = _AtokenContract;
+        BtokenContract = _BtokenContract;
         tokenPrice = _tokenPrice;
     }
 
@@ -22,8 +24,10 @@ contract ShrubManager {
 
     function buyTokens(uint256 _numberOfTokens) public payable {
         require(msg.value == multiply(_numberOfTokens, tokenPrice));
-        require(tokenContract.balanceOf(address(this)) >= _numberOfTokens);
-        require(tokenContract.transfer(msg.sender, _numberOfTokens));
+        require(AtokenContract.balanceOf(address(this)) >= _numberOfTokens);
+        require(BtokenContract.balanceOf(address(this)) >= _numberOfTokens);
+        require(AtokenContract.transfer(msg.sender, _numberOfTokens));
+        require(BtokenContract.transfer(msg.sender, _numberOfTokens));
 
         tokensSold += _numberOfTokens;
 
@@ -32,7 +36,8 @@ contract ShrubManager {
 
     function endSale() public {
         require(msg.sender == admin);
-        require(tokenContract.transfer(admin, tokenContract.balanceOf(address(this))));
+        require(AtokenContract.transfer(admin, AtokenContract.balanceOf(address(this))));
+        require(BtokenContract.transfer(admin, BtokenContract.balanceOf(address(this))));
 
         // UPDATE: Let's not destroy the contract here
         // Just transfer the balance to the admin
