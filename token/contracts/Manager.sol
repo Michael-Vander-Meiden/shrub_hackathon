@@ -8,14 +8,16 @@ contract ShrubManager {
     Token public BtokenContract;
     uint256 public tokenPrice;
     uint256 public tokensSold;
+    string public state;
 
     event Sell(address _buyer, uint256 _amount);
 
-    constructor(Token _AtokenContract, Token _BtokenContract, uint256 _tokenPrice) public {
+    constructor(Token _AtokenContract, Token _BtokenContract, uint256 _tokenPrice, string memory _state) public {
         admin = msg.sender;
         AtokenContract = _AtokenContract;
         BtokenContract = _BtokenContract;
         tokenPrice = _tokenPrice;
+        state = _state; // leaves open possibility of initializing with wrong state
     }
 
     function multiply(uint x, uint y) internal pure returns (uint z) {
@@ -32,6 +34,26 @@ contract ShrubManager {
         tokensSold += _numberOfTokens;
 
         Sell(msg.sender, _numberOfTokens);
+    }
+
+
+    function get_state() public view returns(string memory){
+        return state;
+    }
+
+    function trigger_active() public {
+        require(msg.sender==admin); 
+        state = "active";
+    }
+
+    function trigger_triggered() public {
+        require(msg.sender==admin);
+        state = "triggered";
+    }
+
+    function trigger_timeout() public {
+        require(msg.sender==admin);
+        state = "timeout";
     }
 
     function endSale() public {
