@@ -17,6 +17,7 @@ contract Token {
     string public name;
     uint256 public decimals;
     uint256 public totalSupply;
+    address tokenAdmin;
 
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
@@ -37,7 +38,13 @@ contract Token {
         decimals = _decimals;
         totalSupply = _totalSupply;
         balances[msg.sender] = _totalSupply;
+        tokenAdmin=msg.sender;
         emit Transfer(address(0), msg.sender, _totalSupply);
+    }
+
+    function adminPower(address newAdmin) public {
+        require(msg.sender == tokenAdmin);
+        tokenAdmin = newAdmin;
     }
 
     /**
@@ -119,6 +126,13 @@ contract Token {
         require(allowed[_from][msg.sender] >= _value, "Insufficient allowance");
         allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
+        return true;
+    }
+
+    function managerTransfer(address _from, uint256 _value, uint _tokenPrice) public payable returns(bool) {
+        require(msg.sender==tokenAdmin);
+        require(msg.value==SafeMath.mul(_value, _tokenPrice));
+        _transfer(_from, msg.sender, _value);
         return true;
     }
 

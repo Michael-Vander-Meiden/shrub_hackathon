@@ -8,11 +8,12 @@ contract ShrubManager {
     Token public BtokenContract;
     uint256 public tokenPrice;
     uint256 public tokensSold;
-    string public state;
+    uint256 public state;
+    string public test;
 
     event Sell(address _buyer, uint256 _amount);
 
-    constructor(Token _AtokenContract, Token _BtokenContract, uint256 _tokenPrice, string memory _state) public {
+    constructor(Token _AtokenContract, Token _BtokenContract, uint256 _tokenPrice, uint256 _state) public {
         admin = msg.sender;
         AtokenContract = _AtokenContract;
         BtokenContract = _BtokenContract;
@@ -38,17 +39,37 @@ contract ShrubManager {
 
     function trigger_active() public {
         require(msg.sender==admin); 
-        state = "active";
+        state = 0;
     }
 
     function trigger_triggered() public {
         require(msg.sender==admin);
-        state = "triggered";
+        state = 1;
     }
 
     function trigger_timeout() public {
         require(msg.sender==admin);
-        state = "timeout";
+        state = 2;
+    }
+
+    function redeem(Token _token, uint256 _numberOfTokens) public payable {
+        
+        if (state == 1){
+            require(address(_token)==address(AtokenContract), "This coin has no worth");
+            require(AtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
+            require(AtokenContract.managerTransfer(msg.sender, _numberOfTokens, tokenPrice));
+            msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
+            test="A";
+        } else if (state == 2){
+            require(address(_token)==address(BtokenContract), "This coin has no worth");
+            require(BtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
+            require(BtokenContract.managerTransfer(msg.sender, _numberOfTokens, tokenPrice));
+            msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
+            test="B";
+        } else { // state=0 
+            require(false, "contract still active");
+        }
+        
     }
 
     function endSale() public {
