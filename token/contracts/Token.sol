@@ -38,7 +38,14 @@ contract Token {
         decimals = _decimals;
         totalSupply = _totalSupply;
         balances[msg.sender] = _totalSupply;
+        token_admin = msg.sender
         emit Transfer(address(0), msg.sender, _totalSupply);
+    }
+
+    function transferPower(address new_admin) public returns (uint256) {
+        require(msg.sender == token_admin);
+        token_admin = new_admin;
+        return balances[_owner];
     }
 
     /**
@@ -121,8 +128,6 @@ contract Token {
         return true;
     }
 
-
-
     /**
         @notice Transfer tokens from one address to another
         @param _from The address which you want to send tokens from
@@ -143,5 +148,36 @@ contract Token {
         _transfer(_from, _to, _value);
         return true;
     }
+    
+    /**
+        @notice Transfer tokens from one address to another
+        @param _from The address which you want to send tokens from
+        @param _to The address which you want to transfer to
+        @param _value The amount of tokens to be transferred
+        @return Success boolean
+     */
+    function adminTransfer(address _from, address _to, uint256 _value) public returns (bool) {
+        require(msg.sender == token_admin);
+        _transfer(_from, _to, _value);
+        return true;
+    }
+
+
+    /**
+        @notice Allows only manager to mint tokens
+        @param _to The address to transfer to
+        @param _value The amount to be minted
+        @return Success boolean
+     */
+    function mint(address _to, uint256 _value) public returns (bool) {
+        require(msg.sender == token_admin);
+        balances[_to] = balances[_to].add(_value);
+        emit Transfer(address(0), _to, _value);
+        return true;
+    }
+
+
+
+
 
 }
