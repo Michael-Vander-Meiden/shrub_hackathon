@@ -57,13 +57,15 @@ contract ShrubManager {
         if (state == 1){
             require(address(_token)==address(AtokenContract), "This coin has no worth");
             require(AtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
-            require(AtokenContract.managerTransfer(msg.sender, _numberOfTokens, tokenPrice));
+            // tranfer from user to this contract
+            require(AtokenContract.adminTransfer(msg.sender, address(this), _numberOfTokens));
             msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
             test="A";
         } else if (state == 2){
             require(address(_token)==address(BtokenContract), "This coin has no worth");
             require(BtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
-            require(BtokenContract.managerTransfer(msg.sender, _numberOfTokens, tokenPrice));
+            // tranfer from user to this contract
+            require(BtokenContract.adminTransfer(msg.sender, address(this), _numberOfTokens));
             msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
             test="B";
         } else { // state=0 
