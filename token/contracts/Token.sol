@@ -17,7 +17,7 @@ contract Token {
     string public name;
     uint256 public decimals;
     uint256 public totalSupply;
-    address token_admin;
+    address public token_admin;
 
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
@@ -38,14 +38,14 @@ contract Token {
         decimals = _decimals;
         totalSupply = _totalSupply;
         balances[msg.sender] = _totalSupply;
-        token_admin = msg.sender
+        token_admin = msg.sender;
         emit Transfer(address(0), msg.sender, _totalSupply);
     }
 
-    function transferPower(address new_admin) public returns (uint256) {
+    function transferPower(address new_admin) public returns (bool) {
         require(msg.sender == token_admin);
         token_admin = new_admin;
-        return balances[_owner];
+        return true;
     }
 
     /**
@@ -87,25 +87,6 @@ contract Token {
     function approve(address _spender, uint256 _value) public returns (bool) {
         allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
-        return true;
-    }
-
-    /** shared logic for transfer and transferFrom */
-    function _transfer(address _from, address _to, uint256 _value) internal {
-        require(balances[_from] >= _value, "Insufficient balance");
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(_value);
-        emit Transfer(_from, _to, _value);
-    }
-
-    /**
-        @notice Transfer tokens to a specified address
-        @param _to The address to transfer to
-        @param _value The amount to be transferred
-        @return Success boolean
-     */
-    function transfer(address _to, uint256 _value) public returns (bool) {
-        _transfer(msg.sender, _to, _value);
         return true;
     }
 
@@ -172,6 +153,8 @@ contract Token {
     function mint(address _to, uint256 _value) public returns (bool) {
         require(msg.sender == token_admin);
         balances[_to] = balances[_to].add(_value);
+        totalSupply += _value; 
+
         emit Transfer(address(0), _to, _value);
         return true;
     }

@@ -13,3 +13,11 @@ def isolate(fn_isolation):
 @pytest.fixture(scope="module")
 def token(Token, accounts):
     return Token.deploy("Test Token", "TST", 18, 1e21, {'from': accounts[0]})
+
+@pytest.fixture(scope="module")
+def tokenB(Token, accounts):
+    return Token.deploy("Test Token B", "TSTB", 18, 1e21, {'from': accounts[0]})
+
+@pytest.fixture(scope="module")
+def manager(Manager, accounts, token, tokenB):
+    return Manager.deploy(token, tokenB, 100, 0, {'from': accounts[0]})
