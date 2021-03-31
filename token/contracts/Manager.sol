@@ -2,7 +2,7 @@ pragma solidity ^0.6.0;
 
 import "./Token.sol";
 
-contract ShrubManager {
+contract Manager {
     address payable admin;
     Token public AtokenContract;
     Token public BtokenContract;
@@ -26,11 +26,10 @@ contract ShrubManager {
     }
 
     function buyTokens(uint256 _numberOfTokens) public payable {
+        require(state == 0);
         require(msg.value == multiply(_numberOfTokens, tokenPrice));
-        require(AtokenContract.balanceOf(address(this)) >= _numberOfTokens);
-        require(BtokenContract.balanceOf(address(this)) >= _numberOfTokens);
-        require(AtokenContract.transfer(msg.sender, _numberOfTokens));
-        require(BtokenContract.transfer(msg.sender, _numberOfTokens));
+        require(AtokenContract.mint(msg.sender, _numberOfTokens));
+        require(BtokenContract.mint(msg.sender, _numberOfTokens));
 
         tokensSold += _numberOfTokens;
 
@@ -72,15 +71,5 @@ contract ShrubManager {
             require(false, "contract still active");
         }
         
-    }
-
-    function endSale() public {
-        require(msg.sender == admin);
-        require(AtokenContract.transfer(admin, AtokenContract.balanceOf(address(this))));
-        require(BtokenContract.transfer(admin, BtokenContract.balanceOf(address(this))));
-
-        // UPDATE: Let's not destroy the contract here
-        // Just transfer the balance to the admin
-        admin.transfer(address(this).balance);
     }
 }
