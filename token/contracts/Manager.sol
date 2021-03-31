@@ -9,7 +9,7 @@ contract Manager {
     uint256 public tokenPrice;
     uint256 public tokensSold;
     uint256 public state;
-    string public test;
+    
 
     event Sell(address _buyer, uint256 _amount);
 
@@ -56,20 +56,21 @@ contract Manager {
         if (state == 1){
             require(address(_token)==address(AtokenContract), "This coin has no worth");
             require(AtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
-            // tranfer from user to this contract
+            require(address(this).balance>=SafeMath.mul(_numberOfTokens, tokenPrice));
             require(AtokenContract.adminTransfer(msg.sender, address(this), _numberOfTokens));
             msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
-            test="A";
+            
         } else if (state == 2){
             require(address(_token)==address(BtokenContract), "This coin has no worth");
             require(BtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
-            // tranfer from user to this contract
+            require(address(this).balance>=SafeMath.mul(_numberOfTokens, tokenPrice));
             require(BtokenContract.adminTransfer(msg.sender, address(this), _numberOfTokens));
             msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
-            test="B";
+            
         } else { // state=0 
             require(false, "contract still active");
         }
-        
+    
     }
+
 }
