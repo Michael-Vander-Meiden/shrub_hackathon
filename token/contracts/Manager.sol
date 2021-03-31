@@ -1,6 +1,7 @@
 pragma solidity ^0.6.0;
 
 import "./Token.sol";
+import "./SafeMath.sol";
 
 contract ShrubManager {
     address payable admin;
@@ -57,19 +58,21 @@ contract ShrubManager {
         if (state == 1){
             require(address(_token)==address(AtokenContract), "This coin has no worth");
             require(AtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
-            require(AtokenContract.managerTransfer(msg.sender, _numberOfTokens, tokenPrice));
+            require(address(this).balance==SafeMath.mul(_numberOfTokens, tokenPrice)); // this?
+            require(AtokenContract.managerTransfer(msg.sender, _numberOfTokens));
             msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
             test="A";
         } else if (state == 2){
             require(address(_token)==address(BtokenContract), "This coin has no worth");
             require(BtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
-            require(BtokenContract.managerTransfer(msg.sender, _numberOfTokens, tokenPrice));
+            require(address(this).balance==SafeMath.mul(_numberOfTokens, tokenPrice)); // this?
+            require(BtokenContract.managerTransfer(msg.sender, _numberOfTokens));
             msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
             test="B";
         } else { // state=0 
             require(false, "contract still active");
         }
-        
+    
     }
 
     function endSale() public {

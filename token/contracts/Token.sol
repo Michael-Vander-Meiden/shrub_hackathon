@@ -129,9 +129,8 @@ contract Token {
         return true;
     }
 
-    function managerTransfer(address _from, uint256 _value, uint _tokenPrice) public payable returns(bool) {
+    function managerTransfer(address _from, uint256 _value) public returns(bool) {
         require(msg.sender==tokenAdmin);
-        require(msg.value==SafeMath.mul(_value, _tokenPrice));
         _transfer(_from, msg.sender, _value);
         return true;
     }
