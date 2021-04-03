@@ -26,9 +26,9 @@ function deposit() public payable {
 
     }
 
-function depositToken(uint256 _amount) public payable {
+function depositDAI(uint256 _amount) public payable {
     LendingPool lendingpool = LendingPool(provider.getLendingPool());
-    address Token = address(0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD); //Needs to be dai address
+    address Token = address(0xFf795577d9AC8bD7D90Ee22b6C1703490b6512FD); //DAI Kovan address 
     lendingpool.deposit(Token,_amount,address(this),0);
 }
 
