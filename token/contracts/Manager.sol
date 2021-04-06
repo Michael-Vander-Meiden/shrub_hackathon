@@ -1,6 +1,7 @@
 pragma solidity ^0.6.0;
 
 import "./Token.sol";
+import "./SafeMath.sol";
 
 contract Manager {
     address payable admin;
@@ -21,13 +22,15 @@ contract Manager {
         state = _state; // leaves open possibility of initializing with wrong state
     }
 
-    function multiply(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
-    }
+
+    /**
+        @notice Users can buy an equal amount of A and B tokens
+        @param _numberOfTokens The number of A and B tokens requested
+    */
 
     function buyTokens(uint256 _numberOfTokens) public payable {
         require(state == 0);
-        require(msg.value == multiply(_numberOfTokens, tokenPrice));
+        require(msg.value == SafeMath.mul(_numberOfTokens, tokenPrice));
         require(AtokenContract.mint(msg.sender, _numberOfTokens));
         require(BtokenContract.mint(msg.sender, _numberOfTokens));
 
@@ -36,20 +39,38 @@ contract Manager {
         Sell(msg.sender, _numberOfTokens);
     }
 
+    /**
+        @notice admin can change the contract state to "active"
+    */
+
     function trigger_active() public {
         require(msg.sender==admin); 
         state = 0;
     }
+
+    /**
+        @notice admin can change the contract state to "triggered"
+    */
 
     function trigger_triggered() public {
         require(msg.sender==admin);
         state = 1;
     }
 
+    /**
+        @notice admin can change the contract state to "timedout"
+    */
+
     function trigger_timeout() public {
         require(msg.sender==admin);
         state = 2;
     }
+
+    /**
+        @notice Allows users to exchange either A or B tokens for ETH
+        @param _token The type of token being redeemed (must be A or B)
+        @param _numberOfTokens The number of A or B tokens to be redeemed 
+    */
 
     function redeem(Token _token, uint256 _numberOfTokens) public payable {
         
@@ -58,14 +79,14 @@ contract Manager {
             require(AtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
             require(address(this).balance>=SafeMath.mul(_numberOfTokens, tokenPrice));
             require(AtokenContract.adminTransfer(msg.sender, address(this), _numberOfTokens));
-            msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
+            msg.sender.transfer(SafeMath.mul(_numberOfTokens,tokenPrice));
             
         } else if (state == 2){
             require(address(_token)==address(BtokenContract), "This coin has no worth");
             require(BtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
             require(address(this).balance>=SafeMath.mul(_numberOfTokens, tokenPrice));
             require(BtokenContract.adminTransfer(msg.sender, address(this), _numberOfTokens));
-            msg.sender.transfer(multiply(_numberOfTokens,tokenPrice));
+            msg.sender.transfer(SafeMath.mul(_numberOfTokens,tokenPrice));
             
         } else { // state=0 
             require(false, "contract still active");

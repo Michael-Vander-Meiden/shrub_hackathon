@@ -131,7 +131,7 @@ contract Token {
     }
     
     /**
-        @notice Transfer tokens from one address to another
+        @notice Transfer tokens from one address to another. Admin access only. 
         @param _from The address which you want to send tokens from
         @param _to The address which you want to transfer to
         @param _value The amount of tokens to be transferred
