@@ -13,23 +13,32 @@ function App() {
     })
     const [shrubManager, setShrubManager] = useState(null);
     const [shrubManagerProperties, setShrubManagerProperties] = useState(null)
-    const loadContract = async (chain, contractName, deployment = 0) => {
+    const loadContract = async (chain, contractName, deploymentNum = 0) => {
       const {web3} = state;
       if (!web3) {
           return null;
       }
   
       // Get the address of the most recent deployment from the deployment map
-      const address = map[chain][contractName][deployment]
-
-      // Load the artifact with the specified address
-      const contractArtifact = await import(`./artifacts/deployments/${chain}/${address}.json`)
-
-      if (!address || !contractArtifact) {
+      let address;
+      try  {
+        address = map[chain][contractName][deploymentNum];
+      } catch(e) {
+          console.log(`Couldn't find any deployed contract "${contractName}" on the chain "${chain}".`);
           return null;
       }
-  
-      return new web3.eth.Contract(contractArtifact.abi, address)
+
+      // Load the artifact with the specified address
+
+     let contractArtifact;
+      try  {
+        contractArtifact = await import(`./artifacts/deployments/${chain}/${address}.json`);
+      } catch(e) {
+        console.log(`Failed to load contract artifact "./artifacts/deployments/${chain}/${address}.json"`);
+          return null;
+      }
+
+      return new web3.eth.Contract(contractArtifact.abi, address);
     }
 
     async function init() {
@@ -60,18 +69,16 @@ function App() {
 
     useEffect(() => {
         if (state.web3) {
-        getShrubManager()
-
+          loadContract("dev", "ShrubManager").then(async (contract) => {
+          if (contract) {
+          setShrubManager(contract);
+          populateShrubManagerProperties(contract);
+          }
         }
-    }, [state.web3])
+       );
 
-    async function getShrubManager() {
-        loadContract("dev", "ShrubManager").then(async (contract) => {
-            setShrubManager(contract)
-            populateShrubManagerProperties(contract);
-            }
-        );
-    }
+      }
+    }, [state.web3, state.accounts, state.chainId])
 
     async function getContractProperty(contract, propName) {
         const value = await contract.methods[propName]().call();
@@ -89,17 +96,15 @@ function App() {
             state,
             test,
         })
-        
     }
+    const isAccountsUnlocked = state.accounts ? state.accounts.length > 0 : false;
     return (
         <div className="App">
-          {shrubManagerProperties ? (
-            <ul>
-              <li>Token Price: {shrubManagerProperties.tokenPrice}</li>
-              <li>Tokens sold: {shrubManagerProperties.tokensSold}</li>
-              <li>State: {shrubManagerProperties.state}</li>
-              <li>Test: {shrubManagerProperties.test}</li>
-            </ul>
+          {!isAccountsUnlocked ? (
+            <p><strong>Connect with Metamask and refresh the page.</strong>
+            </p>
+          ) : shrubManagerProperties ? (
+            <ShrubManager shrubManagerProperties={shrubManagerProperties} />
           ) : (
             <div>Loading <code>ShrubManager</code> ...</div>
           )
@@ -109,4 +114,14 @@ function App() {
     )
 }
 
+const ShrubManager = ({shrubManagerProperties: {tokenPrice, tokensSold, state, test}}) => {
+    return (
+      <ul>
+        <li>Token Price: {tokenPrice}</li>
+        <li>Tokens sold: {tokensSold}</li>
+        <li>State: {state}</li>
+        <li>Test: {test}</li>
+      </ul>
+    )
+}
 export default App
