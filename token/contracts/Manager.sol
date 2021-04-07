@@ -2,8 +2,15 @@ pragma solidity ^0.6.0;
 
 import "./Token.sol";
 import "./SafeMath.sol";
+import "./updateState.sol";
+import "evm-contracts/src/v0.6/ChainlinkClient.sol";
+import "evm-contracts/src/v0.6/vendor/Ownable.sol";
 
-contract Manager {
+
+contract Manager is ChainlinkClient, Ownable {
+    
+    uint256 constant private ORACLE_PAYMENT = 1 * LINK;
+    
     address payable admin;
     Token public AtokenContract;
     Token public BtokenContract;
@@ -14,7 +21,13 @@ contract Manager {
 
     event Sell(address _buyer, uint256 _amount);
 
-    constructor(Token _AtokenContract, Token _BtokenContract, uint256 _tokenPrice, uint256 _state) public {
+    event RequestStateFulfilled(
+    bytes32 indexed requestId,
+    uint256 indexed state
+  );
+
+    constructor(Token _AtokenContract, Token _BtokenContract, uint256 _tokenPrice, uint256 _state) public Ownable() {
+        setPublicChainlinkToken();
         admin = msg.sender;
         AtokenContract = _AtokenContract;
         BtokenContract = _BtokenContract;
@@ -74,6 +87,18 @@ contract Manager {
 
     function redeem(Token _token, uint256 _numberOfTokens) public payable {
         
+        if (state == 0){
+            requestState(address(0x4712020cA7E184C545FD2483696c9dC36cb7c36a),"ca0d86424890466f856de3e868087f81");
+            redeemExecute(_token, _numberOfTokens);
+        } else {
+            redeemExecute(_token, _numberOfTokens);
+        }
+    
+    }
+
+
+    function redeemExecute(Token _token, uint256 _numberOfTokens) internal {
+
         if (state == 1){
             require(address(_token)==address(AtokenContract), "This coin has no worth");
             require(AtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
@@ -91,7 +116,50 @@ contract Manager {
         } else { // state=0 
             require(false, "contract still active");
         }
-    
+    }
+
+
+    // ChainLink
+
+    function requestState(address _oracle, string memory _jobId)
+        public
+        onlyOwner
+    {
+        Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fulfillState.selector);
+        req.add("get", "https://i1ihiyjpu8.execute-api.us-west-1.amazonaws.com/default/test_api");
+        req.add("path", "state");
+        sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
+    }
+
+    function fulfillState(bytes32 _requestId, uint256 _state)
+        public
+        recordChainlinkFulfillment(_requestId)
+    {
+        emit RequestStateFulfilled(_requestId, _state);
+        state = _state;
+    }
+
+    function cancelRequest(
+        bytes32 _requestId,
+        uint256 _payment,
+        bytes4 _callbackFunctionId,
+        uint256 _expiration
+    )
+        public
+        onlyOwner
+    {
+        cancelChainlinkRequest(_requestId, _payment, _callbackFunctionId, _expiration);
+    }
+
+    function stringToBytes32(string memory source) private pure returns (bytes32 result) {
+        bytes memory tempEmptyStringTest = bytes(source);
+        if (tempEmptyStringTest.length == 0) {
+        return 0x0;
+        }
+
+        assembly { // solhint-disable-line no-inline-assembly
+        result := mload(add(source, 32))
+        }
     }
 
 }
