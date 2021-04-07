@@ -89,7 +89,7 @@ contract Manager is ChainlinkClient, Ownable {
         
         if (state == 0){
             requestState(address(0x4712020cA7E184C545FD2483696c9dC36cb7c36a),"ca0d86424890466f856de3e868087f81");
-            redeemExecute(_token, _numberOfTokens);
+            
         } else {
             redeemExecute(_token, _numberOfTokens);
         }
@@ -123,7 +123,7 @@ contract Manager is ChainlinkClient, Ownable {
 
     function requestState(address _oracle, string memory _jobId)
         public
-        onlyOwner
+        // onlyOwner
     {
         Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fulfillState.selector);
         req.add("get", "https://i1ihiyjpu8.execute-api.us-west-1.amazonaws.com/default/test_api");
@@ -137,6 +137,7 @@ contract Manager is ChainlinkClient, Ownable {
     {
         emit RequestStateFulfilled(_requestId, _state);
         state = _state;
+        // redeemExecute(_token, _numberOfTokens);
     }
 
     function cancelRequest(
