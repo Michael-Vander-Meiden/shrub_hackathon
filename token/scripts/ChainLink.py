@@ -24,14 +24,16 @@ from brownie import Token, accounts, ATestnetConsumer, updateState, Manager
 #     A.transferPower(man, {'from':acct})
 #     B.transferPower(man, {'from':acct})
     
-#     acctClient = accounts.load("client")
-#     man.buyTokens(3,{'from':acctClient, 'value':30})
+#     user1 = accounts.load("user1")
+
+#     man.buyTokens(3,{'from':user1, 'value':30})
+#     print(man.state)
 
 def main():
-    acctClient = accounts.load("client")
+    user1 = accounts.load("user1")
     acct=accounts.load("AAVE")
-    A = Token.at("0xa37f7eb8B97Bfb88c9B68384735d644447A5C387")
-    man = Manager.at("0x5e414b6e1d8f8D0Ac27C1912D11C75Ed8568C8aE")
-    # man.requestState("0x4712020ca7e184c545fd2483696c9dc36cb7c36a","ca0d86424890466f856de3e868087f81",{'from': acct})
+    A = Token.at("0xC641B9df0209Be9693250679f3Ce869463Cf9Bb6")
+    man = Manager.at("0x314caA8c71d743973c8c0044BA49597f24718de1")
+    man.requestState("0x4712020ca7e184c545fd2483696c9dc36cb7c36a","ca0d86424890466f856de3e868087f81",{'from': acct})
     
-    man.redeem(A,2,{'from':acctClient})
+#     #man.redeem(A,2,{'from':acctClient})
