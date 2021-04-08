@@ -2,4 +2,5 @@ from brownie import Token, accounts
 
 
 def main():
-    return Token.deploy("Token A", "TOKA", 18, 1e21, {'from': accounts[0]})
+    acct=accounts.load("AAVE")
+    return Token.deploy("Token A", "TOKA", 18, 1e21, {'from': acct})
