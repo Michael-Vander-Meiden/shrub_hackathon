@@ -18,6 +18,13 @@ contract Manager is ChainlinkClient, Ownable {
     uint256 public tokensSold;
     uint256 public state;
     
+    struct RedeemRequest {
+        address payable addr;
+        uint num_tokens;
+        Token tokenContract;
+    }
+    mapping(bytes32 => RedeemRequest) public redeem_book;
+    
 
     event Sell(address _buyer, uint256 _amount);
 
@@ -88,30 +95,33 @@ contract Manager is ChainlinkClient, Ownable {
     function redeem(Token _token, uint256 _numberOfTokens) public payable {
         
         if (state == 0){
-            requestState(address(0x4712020cA7E184C545FD2483696c9dC36cb7c36a),"ca0d86424890466f856de3e868087f81");
             
+            bytes32 _cur_request_id = requestState(address(0x4712020cA7E184C545FD2483696c9dC36cb7c36a),"ca0d86424890466f856de3e868087f81");
+            RedeemRequest memory _cur_request = RedeemRequest(msg.sender, _numberOfTokens, _token);
+            redeem_book[_cur_request_id] = _cur_request; 
+
         } else {
-            redeemExecute(_token, _numberOfTokens);
+            redeemExecute(_token, _numberOfTokens, msg.sender);
         }
     
     }
 
 
-    function redeemExecute(Token _token, uint256 _numberOfTokens) internal {
+    function redeemExecute(Token _token, uint256 _numberOfTokens, address payable redeem_address) internal {
 
         if (state == 1){
             require(address(_token)==address(AtokenContract), "This coin has no worth");
-            require(AtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
+            require(AtokenContract.balanceOf(redeem_address)>=_numberOfTokens);
             require(address(this).balance>=SafeMath.mul(_numberOfTokens, tokenPrice));
-            require(AtokenContract.adminTransfer(msg.sender, address(this), _numberOfTokens));
-            msg.sender.transfer(SafeMath.mul(_numberOfTokens,tokenPrice));
+            require(AtokenContract.adminTransfer(redeem_address, address(this), _numberOfTokens));
+            redeem_address.transfer(SafeMath.mul(_numberOfTokens,tokenPrice));
             
         } else if (state == 2){
             require(address(_token)==address(BtokenContract), "This coin has no worth");
-            require(BtokenContract.balanceOf(msg.sender)>=_numberOfTokens);
+            require(BtokenContract.balanceOf(redeem_address)>=_numberOfTokens);
             require(address(this).balance>=SafeMath.mul(_numberOfTokens, tokenPrice));
-            require(BtokenContract.adminTransfer(msg.sender, address(this), _numberOfTokens));
-            msg.sender.transfer(SafeMath.mul(_numberOfTokens,tokenPrice));
+            require(BtokenContract.adminTransfer(redeem_address, address(this), _numberOfTokens));
+            redeem_address.transfer(SafeMath.mul(_numberOfTokens,tokenPrice));
             
         } else { // state=0 
             require(false, "contract still active");
@@ -122,13 +132,15 @@ contract Manager is ChainlinkClient, Ownable {
     // ChainLink
 
     function requestState(address _oracle, string memory _jobId)
-        public
+        public returns (bytes32 requestId)
         // onlyOwner
     {
         Chainlink.Request memory req = buildChainlinkRequest(stringToBytes32(_jobId), address(this), this.fulfillState.selector);
         req.add("get", "https://i1ihiyjpu8.execute-api.us-west-1.amazonaws.com/default/test_api");
         req.add("path", "state");
-        sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
+        
+        // Returns ID of request
+        return sendChainlinkRequestTo(_oracle, req, ORACLE_PAYMENT);
     }
 
     function fulfillState(bytes32 _requestId, uint256 _state)
@@ -137,7 +149,13 @@ contract Manager is ChainlinkClient, Ownable {
     {
         emit RequestStateFulfilled(_requestId, _state);
         state = _state;
-        // redeemExecute(_token, _numberOfTokens);
+        
+        // Load redeem request
+        RedeemRequest memory _cur_redeem = redeem_book[_requestId];
+        Token _token = _cur_redeem.tokenContract;
+        uint _numberOfTokens = _cur_redeem.num_tokens;
+        address payable _redeem_address = _cur_redeem.addr;
+        redeemExecute(_token, _numberOfTokens, _redeem_address);
     }
 
     function cancelRequest(
