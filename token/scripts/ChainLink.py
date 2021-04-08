@@ -1,5 +1,5 @@
 from brownie import Token, accounts, ATestnetConsumer, updateState, Manager
-
+import time
 
 # def main():
 #     acct=accounts.load("AAVE")
@@ -24,14 +24,43 @@ from brownie import Token, accounts, ATestnetConsumer, updateState, Manager
 #     A.transferPower(man, {'from':acct})
 #     B.transferPower(man, {'from':acct})
     
-#     acctClient = accounts.load("client")
-#     man.buyTokens(3,{'from':acctClient, 'value':30})
+#     user1 = accounts.load("user1")
+
+#     man.buyTokens(3,{'from':user1, 'value':30})
+#     print(A.balanceOf(user1))
 
 def main():
-    acctClient = accounts.load("client")
+    user1 = accounts.load("user1")
     acct=accounts.load("AAVE")
-    A = Token.at("0xa37f7eb8B97Bfb88c9B68384735d644447A5C387")
-    man = Manager.at("0x5e414b6e1d8f8D0Ac27C1912D11C75Ed8568C8aE")
-    # man.requestState("0x4712020ca7e184c545fd2483696c9dc36cb7c36a","ca0d86424890466f856de3e868087f81",{'from': acct})
+
     
-    man.redeem(A,2,{'from':acctClient})
+    A = Token.at("0x21BA3a26630080a0e693594200Ddc1058DaA5d22")
+    man = Manager.at("0xD7B56D4fcE5124A9245E53c9a5c658d92daD716a")
+    
+    print("BEFORE REDEEM Atoken and Eth balance")
+    #token A balance
+    print(A.balanceOf(user1))
+    # eth balance
+    print(user1.balance())
+    
+    #man.requestState("0x4712020ca7e184c545fd2483696c9dc36cb7c36a","ca0d86424890466f856de3e868087f81",{'from': acct})
+    man.redeem(A,2,{'from':user1})
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print("post redeem, pre fufill")
+    #token A balance
+    print(A.balanceOf(user1))
+    # eth balance
+    print(user1.balance())
+
+    time.sleep(90)
+
+    print("~~~~~~~~~~~~~~~~~~~~~~~~~")
+    print("post redeem, POST FUFILL")
+    #token A balance
+    print(A.balanceOf(user1))
+    # eth balance
+    print(user1.balance())
+
+
+    
+
