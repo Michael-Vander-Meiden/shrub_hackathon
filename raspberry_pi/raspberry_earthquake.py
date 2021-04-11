@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from I2C import I2C
+import RPi.GPIO as GPIO
 from time import sleep
 import requests
 import json
@@ -35,6 +36,8 @@ class ADXL345(I2C):
     ADXL345_RANGE_8_G        = 0x02 # +/-  8g
     ADXL345_RANGE_16_G       = 0x03 # +/- 16g
     ADXL345_SENSITIVITY      = 256.00 # 256LSB/g in full resolution
+
+    LedPin = 17
 
     def __init__(self, busnum=-1, debug=False):
         self.accel = I2C(self.ADXL345_ADDRESS, busnum, debug)
@@ -73,20 +76,28 @@ class ADXL345(I2C):
             res.append(g/self.ADXL345_SENSITIVITY)
         return res
 
+
 # Simple example prints accelerometer data once per second:
 def main():
+    
     accel = ADXL345()
     accel.setRange(accel.ADXL345_RANGE_16_G)
     url = "https://i1ihiyjpu8.execute-api.us-west-1.amazonaws.com/default/test_api"
     api_called = False
-    data = {'newState': 0}
+    data = {'newState': 1}
+    LedPin = 17
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(LedPin, GPIO.OUT, initial=GPIO.HIGH)
+    GPIO.output(LedPin, GPIO.HIGH)
     while True:
         x, y, z = accel.read()
-        if x > 1.0 or y > 1.0:
+        if x > 0.3 or y > 0.3:
             print("API CALLED")
             if api_called == False:
                 x = requests.post(url, json.dumps(data))
                 print("$$$$$$$$$$$$$$$ API CALLED $$$$$$$$$$$$$$$$")
+                # turn on LED when earthquake happens
+                GPIO.output(LedPin, GPIO.LOW)
                 print(x.content)
 
         #print('X: %.2f, Y: %.2f, Z: %.2f'%(x, y, z))
