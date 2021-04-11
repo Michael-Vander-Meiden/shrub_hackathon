@@ -11,6 +11,8 @@ class App extends Component {
         accounts: null,
         chainid: null,
         tokenA: null,
+        tokenB: null,
+        tokenStable: null,
         tokenSupply: 0,
         userBalanceA: null,
         managerState: null,
@@ -63,6 +65,7 @@ class App extends Component {
         //TODO Manually build map.json for correct tokens
         const tokenA = await this.loadContract(4, "TokenA")
         const tokenB = await this.loadContract(4, "TokenB")
+        const tokenStable = await this.loadContract(4, "StableCoin")
         const Manager = await this.loadContract(4, "Manager")
 
         // if (!vyperStorage || !solidityStorage) {
@@ -76,15 +79,19 @@ class App extends Component {
 
         const userBalanceA = await tokenA.methods.balanceOf(this.state.accounts[0]).call()
         const userBalanceB = await tokenB.methods.balanceOf(this.state.accounts[0]).call()
+        const userBalanceStable = await tokenStable.methods.balanceOf(this.state.accounts[0]).call()
 
 
         const managerState = await Manager.methods.state().call()
 
         this.setState({
             tokenA,
+            tokenB,
+            tokenStable,
             tokenSupply,
             userBalanceA,
             userBalanceB,
+            userBalanceStable,
             Manager,
             managerState,
             tokenPrice,
@@ -146,25 +153,29 @@ class App extends Component {
 
 
     buyTokens = async (e) => {
-        const {accounts, Manager, numberTokens, tokenA, tokenPrice} = this.state
+        const {accounts, Manager, numberTokens, tokenA, tokenStable, tokenPrice} = this.state
         e.preventDefault()
         const value = parseInt(numberTokens) * tokenPrice
         if (isNaN(value)) {
             alert("invalid value")
             return
         }
-        await Manager.methods.buyTokens(numberTokens).send({from: accounts[0], gas: 3000000, value:value})
+        await tokenStable.methods.approve(Manager.options.address, value).send({from: accounts[0], gas: 3000000})
             .on('receipt', async () => {
-                this.setState({
-                    userBalanceA: await tokenA.methods.balanceOf(this.state.accounts[0]).call()
-                    
+                Manager.methods.buyTokens(numberTokens).send({from: accounts[0], gas: 3000000, value:value})
+                .on('receipt', async () => {
+                    this.setState({
+                        userBalanceA: await tokenA.methods.balanceOf(this.state.accounts[0]).call()
+                        
+                    })
                 })
             })
+         
     }
 
     render() {
         const {
-            web3, accounts, chainid, tokenA, tokenSupply, userBalanceA, managerState, Manager, numberTokens, tokenPrice, numToRedeem,
+            web3, accounts, chainid, tokenA, tokenSupply, userBalanceA, userBalanceB, userBalanceStable, managerState, Manager, numberTokens, tokenPrice, numToRedeem,
             // vyperStorage, vyperValue, vyperInput,
             // solidityStorage, solidityValue, solidityInput
         } = this.state
@@ -198,7 +209,9 @@ class App extends Component {
             <h2>Token A Contract</h2>
 
             <div>The total supply is: {tokenSupply}</div>
-            <div>Your Balance: {userBalanceA} </div>
+            <div>Your A Balance: {userBalanceA} </div>
+            <div>Your B Balance: {userBalanceB} </div>
+            <div>Your DAI Balance: {userBalanceStable} </div>
             <br/>
 
 

@@ -2,14 +2,18 @@
     "4": {
       
       "TokenA": [
-          "0x982328095bC12d3a8b0B75be1e9FDce4c011202a"
+          "0x6e493037f55Af95D7E8926785648eF4949C61566"
           ],
       "TokenB": [
-            "0x14E95786a6912a56A2Db17fd3756456230Cf9d67"
+            "0x59e34fd47D2533fE6DBB9Ec8C2D39B2fE219f61e"
+          ],
+      "StableCoin": [
+            "0xCaeB8Ce805c34762C1441876F5edA610feF671aa"
           ],
       "Manager": [
-        "0x7927b309535ba4B1D6F42c1aF76a6757Fe45AB58"
-      ],
+            "0xEc178C0bc170165105eAb1569BAEB91734168B57"
+          ],
+
       "Token": [
         "0xE3C4db8BC05c10F84E9a5632d349822aC9d33fea",
         "0x64303d37C8f92F33CE4D0C6Cbb4f188964fC51e6",
