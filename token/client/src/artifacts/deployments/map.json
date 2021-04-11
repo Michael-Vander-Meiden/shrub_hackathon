@@ -1,12 +1,14 @@
 {
     "4": {
+      
+      "TokenA": [
+          "0x64303d37C8f92F33CE4D0C6Cbb4f188964fC51e6"
+          ],
+      "TokenB": [
+            "0xE3C4db8BC05c10F84E9a5632d349822aC9d33fea"
+          ],
       "Manager": [
-        "0x3F9075ABd8A82dA6081fD1aC9d08FD272B091d55",
-        "0xD7B56D4fcE5124A9245E53c9a5c658d92daD716a",
-        "0x314caA8c71d743973c8c0044BA49597f24718de1",
-        "0x655C896B85595C87B97e750ef9317aee4A95ec2E",
-        "0x0b2EC7A16c6FAdE959CB70E433739098B153605F",
-        "0x20a566755BF4aBFEC16E10c4389c9C46dfF0Eae4"
+        "0x3F9075ABd8A82dA6081fD1aC9d08FD272B091d55"
       ],
       "Token": [
         "0xE3C4db8BC05c10F84E9a5632d349822aC9d33fea",

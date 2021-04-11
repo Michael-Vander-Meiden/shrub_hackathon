@@ -13,6 +13,10 @@ class App extends Component {
         tokenA: null,
         tokenSupply: 0,
         userBalanceA: null,
+        managerState: null,
+        numberTokens: 0,
+        tokenPrice: 0,
+        numToRedeem: 0,
         // vyperStorage: null,
         // vyperValue: 0,
         // vyperInput: 0,
@@ -56,7 +60,10 @@ class App extends Component {
             return
         }
 
-        const tokenA = await this.loadContract(4, "Token")
+        //TODO Manually build map.json for correct tokens
+        const tokenA = await this.loadContract(4, "TokenA")
+        const tokenB = await this.loadContract(4, "TokenB")
+        const Manager = await this.loadContract(4, "Manager")
         // const vyperStorage = await this.loadContract("dev", "VyperStorage")
         // const solidityStorage = await this.loadContract("dev", "SolidityStorage")
 
@@ -65,19 +72,24 @@ class App extends Component {
         // }
 
         const tokenSupply = await tokenA.methods.totalSupply().call()
+        const tokenPrice = await Manager.methods.tokenPrice().call()
         // const vyperValue = await vyperStorage.methods.get().call()
         // const solidityValue = await solidityStorage.methods.get().call()
 
         const userBalanceA = await tokenA.methods.balanceOf(this.state.accounts[0]).call()
+        const userBalanceB = await tokenB.methods.balanceOf(this.state.accounts[0]).call()
+
+
+        const managerState = await Manager.methods.state().call()
 
         this.setState({
             tokenA,
             tokenSupply,
             userBalanceA,
-            // vyperStorage,
-            // vyperValue,
-            // solidityStorage,
-            // solidityValue,
+            userBalanceB,
+            Manager,
+            managerState,
+            tokenPrice,
         })
     }
 
@@ -122,25 +134,39 @@ class App extends Component {
             })
     }
 
-    changeSolidity = async (e) => {
-        const {accounts, solidityStorage, solidityInput} = this.state
+    redeemTokens = async (e) => {
+        const {accounts, Manager, numberTokens, tokenA, tokenPrice} = this.state
         e.preventDefault()
-        const value = parseInt(solidityInput)
+        await Manager.methods.redeem().send({from: accounts[0], gas: 3000000})
+            .on('receipt', async () => {
+                this.setState({
+                    userBalanceA: await tokenA.methods.balanceOf(this.state.accounts[0]).call()
+                    
+                })
+            })
+    }
+
+
+    buyTokens = async (e) => {
+        const {accounts, Manager, numberTokens, tokenA, tokenPrice} = this.state
+        e.preventDefault()
+        const value = parseInt(numberTokens) * tokenPrice
         if (isNaN(value)) {
             alert("invalid value")
             return
         }
-        await solidityStorage.methods.set(value).send({from: accounts[0]})
+        await Manager.methods.buyTokens(numberTokens).send({from: accounts[0], gas: 3000000, value:value})
             .on('receipt', async () => {
                 this.setState({
-                    solidityValue: await solidityStorage.methods.get().call()
+                    userBalanceA: await tokenA.methods.balanceOf(this.state.accounts[0]).call()
+                    
                 })
             })
     }
 
     render() {
         const {
-            web3, accounts, chainid, tokenA, tokenSupply, userBalanceA,
+            web3, accounts, chainid, tokenA, tokenSupply, userBalanceA, managerState, Manager, numberTokens, tokenPrice, numToRedeem,
             // vyperStorage, vyperValue, vyperInput,
             // solidityStorage, solidityValue, solidityInput
         } = this.state
@@ -162,11 +188,7 @@ class App extends Component {
         const isAccountsUnlocked = accounts ? accounts.length > 0 : false
 
         return (<div className="App">
-            <h1>Your Brownie Mix is installed and ready.</h1>
-            <p>
-                If your contracts compiled and deployed successfully, you can see the current
-                storage values below.
-            </p>
+
             {
                 !isAccountsUnlocked ?
                     <p><strong>Connect with Metamask and refresh the page to
@@ -174,43 +196,43 @@ class App extends Component {
                     </p>
                     : null
             }
+            <h2>State {managerState}</h2>
             <h2>Token A Contract</h2>
 
             <div>The total supply is: {tokenSupply}</div>
             <div>Your Balance: {userBalanceA} </div>
             <br/>
-            {/* <form onSubmit={(e) => this.changeVyper(e)}>
-                <div>
-                    <label>Change the value to: </label>
-                    <br/>
-                    <input
-                        name="vyperInput"
-                        type="text"
-                        value={vyperInput}
-                        onChange={(e) => this.setState({vyperInput: e.target.value})}
-                    />
-                    <br/>
-                    <button type="submit" disabled={!isAccountsUnlocked}>Submit</button>
-                </div>
-            </form> */}
 
-            <h2>Solidity Storage Contract</h2>
+
+            <h2>Buy Tokens!!</h2>
+            <h2>Price = {tokenPrice} wei per A/B pair of tokens</h2>
             <br/>
-            {/* <form onSubmit={(e) => this.changeSolidity(e)}>
+            <form onSubmit={(e) => this.buyTokens(e)}>
                 <div>
-                    <label>Change the value to: </label>
+                    <label>Number of tokens: </label>
                     <br/>
                     <input
-                        name="solidityInput"
-                        type="text"
-                        value={solidityInput}
-                        onChange={(e) => this.setState({solidityInput: e.target.value})}
+                        name="numberTokens"
+                        type="number"
+                        value={numberTokens}
+                        onChange={(e) => this.setState({numberTokens: e.target.value})}
                     />
                     <br/>
                     <button type="submit" disabled={!isAccountsUnlocked}>Submit</button>
 
                 </div>
-            </form> */}
+            </form>
+
+            <form onSubmit={(e) => this.redeemTokens(e)}>
+                <div>
+                    <label>Click here to redeem your tokens: </label>
+                    <br/>
+                    <br/>
+                    <button type="submit" disabled={!isAccountsUnlocked}>Redeem Tokens</button>
+
+                </div>
+            </form>
+
         </div>)
     }
 }

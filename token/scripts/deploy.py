@@ -3,8 +3,8 @@ from brownie import Token, Manager, accounts
 
 def main():
     acct=accounts.load("AAVE")
-    A=Token.deploy("Token A", "TOKA", 18, 1e21, {'from': acct})
-    B=Token.deploy("Token B", "TOKB", 18, 1e21, {'from': acct})
+    A=Token.deploy("Token A", "TOKA", 18, 0, {'from': acct})
+    B=Token.deploy("Token B", "TOKB", 18, 0, {'from': acct})
     man=Manager.deploy(A, B, 10, 0,{'from': acct})
 
     A.transferPower(man, {'from':acct})
