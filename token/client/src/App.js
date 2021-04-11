@@ -64,13 +64,11 @@ class App extends Component {
         const tokenA = await this.loadContract(4, "TokenA")
         const tokenB = await this.loadContract(4, "TokenB")
         const Manager = await this.loadContract(4, "Manager")
-        // const vyperStorage = await this.loadContract("dev", "VyperStorage")
-        // const solidityStorage = await this.loadContract("dev", "SolidityStorage")
 
         // if (!vyperStorage || !solidityStorage) {
         //     return
         // }
-
+        console.log(tokenA)
         const tokenSupply = await tokenA.methods.totalSupply().call()
         const tokenPrice = await Manager.methods.tokenPrice().call()
         // const vyperValue = await vyperStorage.methods.get().call()
