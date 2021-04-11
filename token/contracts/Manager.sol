@@ -14,6 +14,7 @@ contract Manager is ChainlinkClient, Ownable {
     address payable admin;
     Token public AtokenContract;
     Token public BtokenContract;
+    Token public stableCoin;
     uint256 public tokenPrice;
     uint256 public tokensSold;
     uint256 public state;
@@ -28,11 +29,12 @@ contract Manager is ChainlinkClient, Ownable {
     uint256 indexed state
   );
 
-    constructor(Token _AtokenContract, Token _BtokenContract, uint256 _tokenPrice, uint256 _state) public Ownable() {
+    constructor(Token _AtokenContract, Token _BtokenContract, Token _stableCoin, uint256 _tokenPrice, uint256 _state) public Ownable() {
         setPublicChainlinkToken();
         admin = msg.sender;
         AtokenContract = _AtokenContract;
         BtokenContract = _BtokenContract;
+        stableCoin = _stableCoin;
         tokenPrice = _tokenPrice;
         state = _state; // leaves open possibility of initializing with wrong state
     }
@@ -45,7 +47,11 @@ contract Manager is ChainlinkClient, Ownable {
 
     function buyTokens(uint256 _numberOfTokens) public payable {
         require(state == 0);
-        require(msg.value == SafeMath.mul(_numberOfTokens, tokenPrice));
+        //Check to make sure that buyer has allowed stablecoin transfer
+        uint _allowance = stableCoin.allowance(msg.sender, address(this));
+        //make sure value matches tokens requested
+        require(_allowance == SafeMath.mul(_numberOfTokens, tokenPrice));
+        require(stableCoin.transferFrom(msg.sender, address(this), _allowance));
         require(AtokenContract.mint(msg.sender, _numberOfTokens));
         require(BtokenContract.mint(msg.sender, _numberOfTokens));
 
@@ -104,17 +110,17 @@ contract Manager is ChainlinkClient, Ownable {
         // redeems Token A if state==1
         if (state == 1){
             uint _tokens_to_redeem = AtokenContract.balanceOf(redeem_address);
-            require(address(this).balance>=SafeMath.mul(_tokens_to_redeem, tokenPrice));
+            require(stableCoin.balanceOf(address(this))>=SafeMath.mul(_tokens_to_redeem, tokenPrice));
             require(AtokenContract.adminTransfer(redeem_address, address(this), _tokens_to_redeem));
-            redeem_address.transfer(SafeMath.mul(_tokens_to_redeem,tokenPrice));
+            require(stableCoin.transfer(redeem_address, SafeMath.mul(_tokens_to_redeem,tokenPrice)));
             
         } 
         // redeems Token B if state == 2
         else if (state == 2){
             uint _tokens_to_redeem = BtokenContract.balanceOf(redeem_address);
-            require(address(this).balance>=SafeMath.mul(_tokens_to_redeem, tokenPrice));
+            require(stableCoin.balanceOf(address(this))>=SafeMath.mul(_tokens_to_redeem, tokenPrice));
             require(BtokenContract.adminTransfer(redeem_address, address(this), _tokens_to_redeem));
-            redeem_address.transfer(SafeMath.mul(_tokens_to_redeem,tokenPrice));
+            require(stableCoin.transfer(redeem_address, SafeMath.mul(_tokens_to_redeem,tokenPrice)));
             
         } 
         // skips redemption if contract is still active
