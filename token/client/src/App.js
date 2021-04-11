@@ -4,6 +4,11 @@ import {getWeb3} from "./getWeb3"
 import map from "./artifacts/deployments/map.json"
 import {getEthereum} from "./getEthereum"
 
+import 'bootstrap/dist/css/bootstrap.min.css'
+
+import {Button, Container, Card, Alert, Form} from "react-bootstrap"
+
+
 class App extends Component {
 
     state = {
@@ -175,7 +180,7 @@ class App extends Component {
 
     render() {
         const {
-            web3, accounts, chainid, tokenA, tokenSupply, userBalanceA, userBalanceB, userBalanceStable, managerState, Manager, numberTokens, tokenPrice, numToRedeem,
+            web3, accounts, chainid, tokenA, tokenSupply, userBalanceA, userBalanceB, userBalanceStable, managerState, Manager, numberTokens, tokenPrice, numToRedeem
             // vyperStorage, vyperValue, vyperInput,
             // solidityStorage, solidityValue, solidityInput
         } = this.state
@@ -196,7 +201,11 @@ class App extends Component {
 
         const isAccountsUnlocked = accounts ? accounts.length > 0 : false
 
-        return (<div className="App">
+        return (
+        <body>
+        
+        <div className="App">
+        
 
             {
                 !isAccountsUnlocked ?
@@ -205,46 +214,116 @@ class App extends Component {
                     </p>
                     : null
             }
-            <h2>State {managerState}</h2>
-            <h2>Token A Contract</h2>
-
-            <div>The total supply is: {tokenSupply}</div>
-            <div>Your A Balance: {userBalanceA} </div>
-            <div>Your B Balance: {userBalanceB} </div>
-            <div>Your DAI Balance: {userBalanceStable} </div>
-            <br/>
-
-
-            <h2>Buy Tokens!!</h2>
-            <h2>Price = {tokenPrice} wei per A/B pair of tokens</h2>
-            <br/>
-            <form onSubmit={(e) => this.buyTokens(e)}>
-                <div>
-                    <label>Number of tokens: </label>
-                    <br/>
-                    <input
-                        name="numberTokens"
-                        type="number"
-                        value={numberTokens}
-                        onChange={(e) => this.setState({numberTokens: e.target.value})}
-                    />
-                    <br/>
-                    <button type="submit" disabled={!isAccountsUnlocked}>Submit</button>
-
+            
+            <Container>
+            
+                <br/>
+                <div class="row flex-xl-nowrap">
+                    <div class="col">
+                        <Alert variant="primary">
+                            <h1> Shrub Marketplace </h1>
+                            <h2>State: {managerState}</h2>
+                        </Alert>
+                    </div>
                 </div>
-            </form>
-
-            <form onSubmit={(e) => this.redeemTokens(e)}>
-                <div>
-                    <label>Click here to redeem your tokens: </label>
+    
+                <div class="row flex-xl-nowrap">
+                    <div class="col-7">
+                    </div>
+                    <div class="col-5">
+                    {/* <h2>State {managerState}</h2> */}
+                    
+                        <Card variant="secondary">
+                            <Card.Header>
+                                    <h2>Balances</h2>
+                            </Card.Header>
+                            <Card.Body >
+                                <Card.Text>
+                                    {/* <div>The total supply is: {tokenSupply}</div> */}
+                                    <div>Your <strong>A</strong> Token Balance: {userBalanceA} </div>
+                                    <div>Your <strong>B</strong> Token Balance: {userBalanceB} </div>
+                                    <div>Your <strong>DAI</strong> Balance: {userBalanceStable} </div>
+                                </Card.Text>
+                            </Card.Body>
+                        </Card>
                     <br/>
-                    <br/>
-                    <button type="submit" disabled={!isAccountsUnlocked}>Redeem Tokens</button>
-
+                    </div>
                 </div>
-            </form>
+                <div class="row flex-xl-nowrap">
+                    <div class="col-2">
+                    </div>
+                    <div class="col-8">
 
-        </div>)
+                        <Card>
+                            <Card.Header>
+                                <h2>Purchase Token Pairs</h2>
+                            </Card.Header>
+                                <br/>
+                                <Card.Text>
+                                    <h5>Current Price: {tokenPrice} wei per A/B pair of tokens</h5>
+                                </Card.Text>
+                                <br/>
+                            <Form onSubmit={(e) => this.buyTokens(e)}>
+                                <Form.Group >
+                                
+                                    <Form.Label> Number of tokens: </Form.Label>
+                                    <div class="row flex-xl-nowrap">
+                                        <div class="col-4">
+                                        </div>
+                                        <div class="col-4">
+                                        <Form.Control
+                                            name="numberTokens"
+                                            type="number"
+                                            value={numberTokens}
+                                            onChange={(e) => this.setState({numberTokens: e.target.value})}
+                                        />
+                                        </div>
+                                        
+                                    
+                                        <div class="col-4">
+                                        </div>
+                                    </div>
+                                    <br/>
+                                    <Button type="submit" disabled={!isAccountsUnlocked}>Submit</Button>
+                                    
+                              </Form.Group>  
+                            </Form>
+                        </Card>
+                    </div>
+                    <div class="col-2">
+                    </div>
+                </div>    
+                <br/>
+                <div class="row flex-xl-nowrap">
+                    <div class="col-2">
+                    </div>
+                    <div class="col-8">
+                        <Card>
+                            <Card.Header>
+                                <h2>Redeem Tokens</h2>
+                            </Card.Header>
+                            <Form onSubmit={(e) => this.redeemTokens(e)}>
+                                    <br/>
+                                    <Form.Label><h5>Click here to redeem your tokens: </h5></Form.Label>
+                                    
+                                    <br/>
+                                    
+                                    <Button type="submit" disabled={!isAccountsUnlocked}>Redeem Tokens</Button>
+                                        
+                            </Form>
+                            <br/>
+                        
+                        </Card>
+                    
+                    </div>
+                    <div class="col-2">
+                    </div>
+                </div>
+            
+        </Container>
+        
+        </div>
+        </body>)
     }
 }
 
