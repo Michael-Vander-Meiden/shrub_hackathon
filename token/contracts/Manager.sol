@@ -1,6 +1,7 @@
 pragma solidity ^0.6.0;
 
 import "./Token.sol";
+import "./test88MPH.sol";
 import "./SafeMath.sol";
 import "./updateState.sol";
 import "evm-contracts/src/v0.6/ChainlinkClient.sol";
@@ -18,6 +19,11 @@ contract Manager is ChainlinkClient, Ownable {
     uint256 public tokenPrice;
     uint256 public tokensSold;
     uint256 public state;
+    test88MPH public test88MPH_contract;
+    //raw amount of Stablecoin Interest earned
+    uint256 public interestEarned;
+    // the extra % in interest that users will receive upon redemption
+    uint256 public interestMultiplier;
     
     mapping(bytes32 => address payable) public redeem_book;
     
@@ -29,11 +35,12 @@ contract Manager is ChainlinkClient, Ownable {
     uint256 indexed state
   );
 
-    constructor(Token _AtokenContract, Token _BtokenContract, Token _stableCoin, uint256 _tokenPrice, uint256 _state) public Ownable() {
+    constructor(Token _AtokenContract, Token _BtokenContract, Token _stableCoin, test88MPH _test88MPH_contract , uint256 _tokenPrice, uint256 _state) public Ownable() {
         setPublicChainlinkToken();
         admin = msg.sender;
         AtokenContract = _AtokenContract;
         BtokenContract = _BtokenContract;
+        test88MPH_contract = _test88MPH_contract;
         stableCoin = _stableCoin;
         tokenPrice = _tokenPrice;
         state = _state; // leaves open possibility of initializing with wrong state
@@ -110,17 +117,19 @@ contract Manager is ChainlinkClient, Ownable {
         // redeems Token A if state==1
         if (state == 1){
             uint _tokens_to_redeem = AtokenContract.balanceOf(redeem_address);
-            require(stableCoin.balanceOf(address(this))>=SafeMath.mul(_tokens_to_redeem, tokenPrice));
+            uint _payout_amount = SafeMath.mul(SafeMath.mul(_tokens_to_redeem, tokenPrice), interestMultiplier);
+            require(stableCoin.balanceOf(address(this)) >= _payout_amount);
             require(AtokenContract.adminTransfer(redeem_address, address(this), _tokens_to_redeem));
-            require(stableCoin.transfer(redeem_address, SafeMath.mul(_tokens_to_redeem,tokenPrice)));
+            require(stableCoin.transfer(redeem_address, _payout_amount));
             
         } 
         // redeems Token B if state == 2
         else if (state == 2){
             uint _tokens_to_redeem = BtokenContract.balanceOf(redeem_address);
-            require(stableCoin.balanceOf(address(this))>=SafeMath.mul(_tokens_to_redeem, tokenPrice));
+            uint _payout_amount = SafeMath.mul(SafeMath.mul(_tokens_to_redeem, tokenPrice), interestMultiplier);
+            require(stableCoin.balanceOf(address(this))>=_payout_amount);
             require(BtokenContract.adminTransfer(redeem_address, address(this), _tokens_to_redeem));
-            require(stableCoin.transfer(redeem_address, SafeMath.mul(_tokens_to_redeem,tokenPrice)));
+            require(stableCoin.transfer(redeem_address, _payout_amount));
             
         } 
         // skips redemption if contract is still active
@@ -149,6 +158,19 @@ contract Manager is ChainlinkClient, Ownable {
         recordChainlinkFulfillment(_requestId)
     {
         emit RequestStateFulfilled(_requestId, _state);
+        
+        //add state change functionality
+        if (state != _state) {
+            //initiate earlyWithdraw with funding params
+            uint256 depositID = 41;
+            uint256 fundingID = 41;
+            test88MPH_contract.earlyWithdraw(depositID, fundingID);
+
+            //calculate total interest earned
+            interestEarned = SafeMath.sub(stableCoin.balanceOf(address(this)), SafeMath.mul(AtokenContract.totalSupply(), tokenPrice));
+            interestMultiplier = SafeMath.div(SafeMath.mul(interestEarned,100), stableCoin.balanceOf(address(this)));
+        }
+        
         state = _state;
         
         // Load redeem request
@@ -178,5 +200,20 @@ contract Manager is ChainlinkClient, Ownable {
         result := mload(add(source, 32))
         }
     }
+
+    function admin88mphDeposit(uint256 amount, uint256 maturationTimestamp) external {
+            require(admin == msg.sender);
+            //approve payment in stablecoin to 88MPH contract
+            stableCoin.approve(address(test88MPH_contract), amount);
+            //deposit
+            test88MPH_contract.deposit(amount, maturationTimestamp);
+            
+        }
+    
+
+    function admin88mphWithdraw(uint256 depositID, uint256 fundingID) external {
+            require(admin == msg.sender);
+            test88MPH_contract.withdraw(depositID, fundingID);
+        }
 
 }
